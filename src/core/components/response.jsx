@@ -109,7 +109,7 @@ export default class Response extends React.Component {
     const ContentType = getComponent("contentType")
     const ExamplesSelect = getComponent("ExamplesSelect")
     const Example = getComponent("Example")
-
+    const isReply = method === 'request' || method === 'message'
 
     var schema, specPathWithPossibleSchema
 
@@ -175,9 +175,7 @@ export default class Response extends React.Component {
 
     return (
       <tr className={ "response " + ( className || "") } data-code={code}>
-        <td className="response-col_status">
-          { code }
-        </td>
+        {!isReply && <td className="response-col_status"> { code } </td>}
         <td className="response-col_description">
 
           <div className="response-col_description__inner">

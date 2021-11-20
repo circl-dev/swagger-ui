@@ -3,7 +3,7 @@ import PropTypes from "prop-types"
 import Im from "immutable"
 
 const SWAGGER2_OPERATION_METHODS = [
-  "get", "put", "post", "delete", "options", "head", "patch"
+  "get", "put", "post", "delete", "options", "head", "patch", "request", "message"
 ]
 
 const OAS3_OPERATION_METHODS = SWAGGER2_OPERATION_METHODS.concat(["trace"])

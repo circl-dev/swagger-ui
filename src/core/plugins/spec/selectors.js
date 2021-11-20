@@ -6,7 +6,7 @@ import { paramToIdentifier } from "../../utils"
 const DEFAULT_TAG = "default"
 
 const OPERATION_METHODS = [
-  "get", "put", "post", "delete", "options", "head", "patch", "trace"
+  "get", "put", "post", "delete", "options", "head", "patch", "trace", "request", "message"
 ]
 
 const state = state => {
