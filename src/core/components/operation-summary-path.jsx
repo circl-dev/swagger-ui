@@ -26,6 +26,7 @@ export default class OperationSummaryPath extends PureComponent{
       tag,
       operationId,
       isDeepLinkingEnabled,
+      method,
     } = operationProps.toJS()
 
     /**
@@ -38,7 +39,11 @@ export default class OperationSummaryPath extends PureComponent{
     }
 
     const DeepLink = getComponent( "DeepLink" )
-
+    // TODO - proto
+    const isReply = method === 'request' || method === 'message'
+    if (isReply) {
+      pathParts[0] = pathParts[0].slice(1)
+    }
     return(
       <span className={ deprecated ? "opblock-summary-path__deprecated" : "opblock-summary-path" }
         data-path={path}>
