@@ -118,7 +118,7 @@ table.model
         {
             color: #666;
             font-weight: normal;
-            
+
             td:first-child
             {
                 font-weight: bold;
@@ -344,4 +344,12 @@ span
 .prop-format
 {
     color: $prop-format-font-color;
+}
+
+.model-example
+{
+    .model-box
+    {
+        display: block;
+    }
 }
