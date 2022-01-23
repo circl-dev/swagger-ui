@@ -114,20 +114,21 @@ export default class Responses extends React.Component {
                      </label> }
         </div>
         <div className="responses-inner">
-          {
-            !tryItOutResponse  ? null
-                              : <div>
-                                  <LiveResponse response={ tryItOutResponse }
-                                                getComponent={ getComponent }
-                                                getConfigs={ getConfigs }
-                                                specSelectors={ specSelectors }
-                                                path={ this.props.path }
-                                                method={ this.props.method }
-                                                displayRequestDuration={ displayRequestDuration } />
-                                  <h4>Responses</h4>
-                                </div>
-
-          }
+        {tryItOutResponse ? <h4>Responses</h4> : null}
+          {!tryItOutResponse
+            ? null
+            : tryItOutResponse.map((res, key) => (
+                <LiveResponse
+                  key={key}
+                  response={res}
+                  getComponent={getComponent}
+                  getConfigs={getConfigs}
+                  specSelectors={specSelectors}
+                  path={this.props.path}
+                  method={this.props.method}
+                  displayRequestDuration={displayRequestDuration}
+                />
+              ))}
 
           <table aria-live="polite" className="responses-table" id={regionId} role="region">
             <thead>
@@ -140,7 +141,7 @@ export default class Responses extends React.Component {
               {
                 responses.entrySeq().map( ([code, response]) => {
 
-                  let className = tryItOutResponse && tryItOutResponse.get("status") == code ? "response_current" : ""
+                  let className = "response_current"
                   return (
                     <Response key={ code }
                               path={path}

@@ -104,11 +104,6 @@ export default class Operation extends PureComponent {
 
     const { showExtensions } = getConfigs()
 
-    // Merge in Live Response
-    if(responses && response && response.size > 0) {
-      let notDocumented = !responses.get(String(response.get("status"))) && !responses.get("default")
-      response = response.set("notDocumented", notDocumented)
-    }
 
     let onChangeKey = [ path, method ] // Used to add values to _this_ operation ( indexed by path and method )
 

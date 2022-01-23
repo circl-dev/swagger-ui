@@ -560,6 +560,16 @@ export const executeWSRequest = (req) =>
     if (!ws) {
       ws = new WebSocket(URL)
       connections[req.pathName] = ws
+      ws.onMessage.addListener((rawRes) => {
+        const response = {
+          error: false,
+          text: rawRes,
+          headers: {
+            "Content-Type": "application/json",
+          }
+        }
+        specActions.setResponse(req.pathName, req.method, response)
+      })
     }
 
     ws.open()
@@ -574,18 +584,6 @@ export const executeWSRequest = (req) =>
 
     ws.onClose.addListener(() => {
       delete connections[req.pathName]
-    })
-
-    ws.onMessage.addListener((rawRes) => {
-      const response = {
-        error: false,
-        text: rawRes,
-        headers: {
-          "Content-Type": "application/json",
-        }
-      }
-
-      specActions.setResponse(req.pathName, req.method, response)
     })
 
   }
