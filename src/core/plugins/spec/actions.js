@@ -6,6 +6,8 @@ import isString from "lodash/isString"
 import debounce from "lodash/debounce"
 import set from "lodash/set"
 import { paramToValue, isEmptyValue } from "core/utils"
+import WebSocket from "websocket-as-promised"
+import * as uuid from "uuid"
 
 // Actions conform to FSA (flux-standard-actions)
 // {type: string,payload: Any|Error, meta: obj, error: bool}
@@ -486,6 +488,106 @@ export const executeRequest = (req) =>
     )
   }
 
+const connections = {}
+export const executeWSRequest = (req) =>
+  ({fn, specActions, specSelectors, authSelectors}) => {
+    let { pathName, method, operation } = req
+
+    const scheme = specSelectors.schemes().get(0)
+    const host = specSelectors.host()
+
+    const auth = authSelectors.authorized().toJS()
+    const queryParams = {}
+    Object.keys(auth).forEach((key) => {
+        queryParams[auth[key].name] = auth[key].value
+    })
+    const params = new URLSearchParams(queryParams).toString()
+    const URL = `${scheme}://${host}?${params}`
+
+    let op = operation.toJS()
+
+    // ensure that explicitly-included params are in the request
+
+    if (operation && operation.get("parameters")) {
+      operation.get("parameters")
+        .filter(param => param && param.get("allowEmptyValue") === true)
+        .forEach(param => {
+          if (specSelectors.parameterInclusionSettingFor([pathName, method], param.get("name"), param.get("in"))) {
+            req.parameters = req.parameters || {}
+            const paramValue = paramToValue(param, req.parameters)
+
+            // if the value is falsy or an empty Immutable iterable...
+            if(!paramValue || (paramValue && paramValue.size === 0)) {
+              // set it to empty string, so Swagger Client will treat it as
+              // present but empty.
+              req.parameters[param.get("name")] = ""
+            }
+          }
+        })
+    }
+
+    // if url is relative, parseUrl makes it absolute by inferring from `window.location`
+    req.contextUrl = parseUrl(specSelectors.url()).toString()
+
+    if(op && op.operationId) {
+      req.operationId = op.operationId
+    } else if(op && pathName && method) {
+      req.operationId = fn.opId(op, pathName, method)
+    }
+
+    let parsedRequest = Object.assign({}, req)
+    parsedRequest = fn.buildRequest(parsedRequest)
+
+    specActions.setRequest(req.pathName, req.method, parsedRequest)
+
+    let parsedMutatedRequest = Object.assign({}, req)
+    specActions.setMutatedRequest(req.pathName, req.method, parsedMutatedRequest)
+
+
+    try {
+      req.requestBody = JSON.parse(req.parameters["body.Body"])
+    } catch (error) {
+      specActions.setResponse(req.pathName, req.method, {
+        error: true, err: serializeError(error)
+      })
+      return
+    }
+
+    const payload = req.requestBody
+    payload.id = uuid.v4()
+
+    let ws = connections[req.pathName]
+    if (!ws) {
+      ws = new WebSocket(URL)
+      connections[req.pathName] = ws
+      ws.onMessage.addListener((rawRes) => {
+        const response = {
+          error: false,
+          text: rawRes,
+          headers: {
+            "Content-Type": "application/json",
+          }
+        }
+        specActions.setResponse(req.pathName, req.method, response)
+      })
+    }
+
+    ws.open()
+      .then(() => {
+        return ws.send(JSON.stringify(payload))
+      })
+      .catch((err) => {
+        specActions.setResponse(req.pathName, req.method, {
+          error: true, err: serializeError(err)
+        })
+      })
+
+    ws.onClose.addListener(() => {
+      delete connections[req.pathName]
+    })
+
+  }
+
 
 // I'm using extras as a way to inject properties into the final, `execute` method - It's not great. Anyone have a better idea? @ponelat
 export const execute = ( { path, method, ...extras }={} ) => (system) => {
@@ -496,7 +598,7 @@ export const execute = ( { path, method, ...extras }={} ) => (system) => {
   let isXml = /xml/i.test(requestContentType)
   let parameters = specSelectors.parameterValues([path, method], isXml).toJS()
 
-  return specActions.executeRequest({
+  return specActions.executeWSRequest({
     ...extras,
     fetch,
     spec,

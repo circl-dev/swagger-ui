@@ -120,8 +120,13 @@ export default {
 
     // Ensure headers
     result.headers = result.headers || {}
+    const current = state.getIn(["responses", path, method])
+    let responses = [fromJSOrdered(result)]
+    if (current) {
+      responses = [...current, fromJSOrdered(result)]
+    }
 
-    let newState = state.setIn( [ "responses", path, method ], fromJSOrdered(result) )
+    let newState = state.setIn( [ "responses", path, method ], responses)
 
     // ImmutableJS messes up Blob. Needs to reset its value.
     if (win.Blob && res.data instanceof win.Blob) {

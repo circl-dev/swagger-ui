@@ -26,10 +26,8 @@ export default class Auths extends React.Component {
   submitAuth =(e) => {
     e.preventDefault()
 
-    // TODO - proto
-    // let { authActions } = this.props
-    // authActions.authorizeWithPersistOption(this.state)
-    alert("Live API testing is not supported at the moment!");
+    let { authActions } = this.props
+    authActions.authorizeWithPersistOption(this.state)
   }
 
   logoutClick =(e) => {
